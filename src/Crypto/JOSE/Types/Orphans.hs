@@ -34,6 +34,21 @@ import Data.Aeson
 import Data.Aeson.Types
 import Data.Text(Text)
 
+viewMaybe :: FromJSON a => Getting b a b -> Object -> Text -> Parser (Maybe b)
+viewMaybe k o t = fmap (fmap (view k)) (o .:? t)
+
+previewEqual :: (ToJSON v, KeyValue kv) => AReview v a -> Text -> a -> kv
+previewEqual k t v = t .= review k v
+
+gettingGen :: Arbitrary s => Getting a s a -> Gen a
+gettingGen k = fmap (view k) arbitrary
+
+genMaybe :: Gen a -> Gen (Maybe a)
+genMaybe g = frequency [(1, return Nothing), (3, fmap Just g)]
+
+gettingGenMaybe :: Arbitrary s => Getting a s a -> Gen (Maybe a)
+gettingGenMaybe k = genMaybe (fmap (view k) arbitrary)
+
 newtype WrappedNonEmpty a =
   WrappedNonEmpty (NonEmpty a)
   deriving (Eq, Ord, Show, Functor, Foldable, Traversable)
@@ -60,40 +75,49 @@ instance ToJSON a => ToJSON (WrappedNonEmpty a) where
 instance Arbitrary a => Arbitrary (WrappedNonEmpty a) where
   arbitrary = (\h t -> WrappedNonEmpty (h :| t)) <$> arbitrary <*> arbitrary
 
-viewMaybe :: FromJSON a => Getting b a b -> Object -> Text -> Parser (Maybe b)
-viewMaybe k o t = fmap (fmap (view k)) (o .:? t)
+(.|=) :: (ToJSON a, KeyValue kv) => Text -> NonEmpty a -> kv
+(.|=) = previewEqual (_Wrapped :: AReview (WrappedNonEmpty a) (NonEmpty a))
+
+infixr 8 .|=
 
 (.:|?) :: FromJSON a => Object -> Text -> Parser (Maybe (NonEmpty a))
 (.:|?) = viewMaybe (_Wrapped :: Getting (NonEmpty a) (WrappedNonEmpty a) (NonEmpty a))
 
 infixl 9 .:|?
 
-previewEqual :: (ToJSON v, KeyValue kv) => AReview v a -> Text -> a -> kv
-previewEqual k t v = t .= review k v
-
-(.|=) :: (ToJSON a, KeyValue kv) => Text -> NonEmpty a -> kv
-(.|=) = previewEqual (_Wrapped :: AReview (WrappedNonEmpty a) (NonEmpty a))
-
-infixr 8 .|=
-
-instance FromJSON URI where
-  parseJSON = withText "URI" $
-    maybe (fail "not a URI") return . parseURI . T.unpack
-
-instance ToJSON URI where
-  toJSON = String . T.pack . show
-
-gettingGen :: Arbitrary s => Getting a s a -> Gen a
-gettingGen k = fmap (view k) arbitrary
-
 gettingGenNonEmpty :: Arbitrary a => Gen (NonEmpty a)
 gettingGenNonEmpty = gettingGen (_Wrapped :: Getting (NonEmpty a) (WrappedNonEmpty a) (NonEmpty a))
 
-genMaybe :: Gen a -> Gen (Maybe a)
-genMaybe g = frequency [(1, return Nothing), (3, fmap Just g)]
-
-gettingGenMaybe :: Arbitrary s => Getting a s a -> Gen (Maybe a)
-gettingGenMaybe k = genMaybe (fmap (view k) arbitrary)
-
 gettingGenMaybeNonEmpty :: Arbitrary a => Gen (Maybe (NonEmpty a))
 gettingGenMaybeNonEmpty = genMaybe gettingGenNonEmpty
+
+newtype WrappedURI =
+  WrappedURI URI
+  deriving (Eq, Ord, Show)
+
+instance WrappedURI ~ x => Rewrapped WrappedURI x
+
+instance Wrapped WrappedURI where
+  type Unwrapped WrappedURI =
+    URI
+  _Wrapped' =
+    iso
+      (\(WrappedURI x) -> x)
+      WrappedURI
+
+instance FromJSON WrappedURI where
+  parseJSON = withText "URI" $
+    maybe (fail "not a URI") return . fmap WrappedURI . parseURI . T.unpack
+
+instance ToJSON WrappedURI where
+  toJSON = String . T.pack . show . view _Wrapped
+
+(.#=) :: KeyValue kv => Text -> URI -> kv
+(.#=) = previewEqual (_Wrapped :: AReview WrappedURI URI)
+
+infixr 8 .#=
+
+(.:#?) :: Object -> Text -> Parser (Maybe URI)
+(.:#?) = viewMaybe (_Wrapped :: Getting URI WrappedURI URI)
+
+infixl 9 .:#?

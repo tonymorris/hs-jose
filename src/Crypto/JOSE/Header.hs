@@ -38,9 +38,11 @@ module Crypto.JOSE.Header
   , headerOptional
   , headerOptional'
   , headerOptionalNonEmpty
+  , headerOptionalURI
   , headerOptionalProtected
   , headerOptionalProtected'
   , headerOptionalProtectedNonEmpty
+  , headerOptionalProtectedURI
 
   -- * Parsing headers
   , parseParams
@@ -80,9 +82,10 @@ import qualified Data.Text as T
 
 import qualified Crypto.JOSE.JWA.JWS as JWA.JWS
 import Crypto.JOSE.JWK (JWK)
-import Crypto.JOSE.Types.Orphans (WrappedNonEmpty)
+import Crypto.JOSE.Types.Orphans (WrappedNonEmpty, WrappedURI)
 import Crypto.JOSE.Types.Internal (unpad)
 import qualified Crypto.JOSE.Types as Types
+import Network.URI(URI)
 
 -- | A thing with parameters.
 --
@@ -257,6 +260,15 @@ headerOptionalNonEmpty
 headerOptionalNonEmpty =
   headerOptional' (_Wrapped :: Getting (NonEmpty a) (WrappedNonEmpty a) (NonEmpty a))
 
+headerOptionalURI
+  :: ProtectionIndicator p
+  => T.Text
+  -> Maybe Object
+  -> Maybe Object
+  -> Parser (Maybe (HeaderParam p URI))
+headerOptionalURI =
+  headerOptional' (_Wrapped :: Getting URI WrappedURI URI)
+
 -- | Parse an optional parameter that, if present, MUST be carried
 -- in the protected header.
 --
@@ -290,6 +302,14 @@ headerOptionalProtectedNonEmpty
   -> Parser (Maybe (NonEmpty a))
 headerOptionalProtectedNonEmpty =
   headerOptionalProtected' (_Wrapped :: Getting (NonEmpty a) (WrappedNonEmpty a) (NonEmpty a))
+
+headerOptionalProtectedURI
+  :: T.Text
+  -> Maybe Object
+  -> Maybe Object
+  -> Parser (Maybe URI)
+headerOptionalProtectedURI =
+  headerOptionalProtected' (_Wrapped :: Getting URI WrappedURI URI)
 
 -- | Parse a required parameter that may be carried in either
 -- the protected or the unprotected header.
