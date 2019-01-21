@@ -112,6 +112,11 @@ import Crypto.JOSE.Header
 import qualified Crypto.JOSE.Types as Types
 import qualified Crypto.JOSE.Types.Internal as Types
 import Crypto.JOSE.Types.Orphans ((.|=), (.#=))
+import Network.URI(URI)
+import Data.Text(Text)
+import Data.X509(SignedCertificate)
+import Crypto.JOSE.Types(Base64SHA1)
+import Crypto.JOSE.Types(Base64SHA256)
 
 {- $extending
 
@@ -194,44 +199,53 @@ data JWSHeader p = JWSHeader
 
 class HasJWSHeader a where
   jwsHeader :: Lens' (a p) (JWSHeader p)
-
+  alg :: Lens' (a p) (HeaderParam p Alg)
+  alg = jwsHeader . alg
+  jku :: Lens' (a p) (Maybe (HeaderParam p URI))
+  jku = jwsHeader . jku
+  jwk :: Lens' (a p) (Maybe (HeaderParam p JWK))  
+  jwk = jwsHeader . jwk
+  kid :: Lens' (a p) (Maybe (HeaderParam p Text))
+  kid = jwsHeader . kid
+  x5u :: Lens' (a p) (Maybe (HeaderParam p URI))
+  x5u = jwsHeader . x5u
+  x5c :: Lens' (a p) (Maybe (HeaderParam p (NonEmpty SignedCertificate)))
+  x5c = jwsHeader . x5c
+  x5t :: Lens' (a p) (Maybe (HeaderParam p Base64SHA1))
+  x5t = jwsHeader . x5t
+  x5tS256 :: Lens' (a p) (Maybe (HeaderParam p Base64SHA256))
+  x5tS256 = jwsHeader . x5tS256
+  typ :: Lens' (a p) (Maybe (HeaderParam p Text))
+  typ = jwsHeader . typ
+  cty :: Lens' (a p) (Maybe (HeaderParam p Text))
+  cty = jwsHeader . cty
+  crit :: Lens' (a p) (Maybe (NonEmpty Text))
+  crit = jwsHeader . crit
+  
 instance HasJWSHeader JWSHeader where
   jwsHeader = id
-
-instance HasJWSHeader a => HasAlg a where
-  alg = jwsHeader . \f h@(JWSHeader { _jwsHeaderAlg = a }) ->
+  alg f h@(JWSHeader { _jwsHeaderAlg = a }) =
     fmap (\a' -> h { _jwsHeaderAlg = a' }) (f a)
-instance HasJWSHeader a => HasJku a where
   jku = jwsHeader . \f h@(JWSHeader { _jwsHeaderJku = a }) ->
     fmap (\a' -> h { _jwsHeaderJku = a' }) (f a)
-instance HasJWSHeader a => HasJwk a where
   jwk = jwsHeader . \f h@(JWSHeader { _jwsHeaderJwk = a }) ->
     fmap (\a' -> h { _jwsHeaderJwk = a' }) (f a)
-instance HasJWSHeader a => HasKid a where
   kid = jwsHeader . \f h@(JWSHeader { _jwsHeaderKid = a }) ->
     fmap (\a' -> h { _jwsHeaderKid = a' }) (f a)
-instance HasJWSHeader a => HasX5u a where
   x5u = jwsHeader . \f h@(JWSHeader { _jwsHeaderX5u = a }) ->
     fmap (\a' -> h { _jwsHeaderX5u = a' }) (f a)
-instance HasJWSHeader a => HasX5c a where
   x5c = jwsHeader . \f h@(JWSHeader { _jwsHeaderX5c = a }) ->
     fmap (\a' -> h { _jwsHeaderX5c = a' }) (f a)
-instance HasJWSHeader a => HasX5t a where
   x5t = jwsHeader . \f h@(JWSHeader { _jwsHeaderX5t = a }) ->
     fmap (\a' -> h { _jwsHeaderX5t = a' }) (f a)
-instance HasJWSHeader a => HasX5tS256 a where
   x5tS256 = jwsHeader . \f h@(JWSHeader { _jwsHeaderX5tS256 = a }) ->
     fmap (\a' -> h { _jwsHeaderX5tS256 = a' }) (f a)
-instance HasJWSHeader a => HasTyp a where
   typ = jwsHeader . \f h@(JWSHeader { _jwsHeaderTyp = a }) ->
     fmap (\a' -> h { _jwsHeaderTyp = a' }) (f a)
-instance HasJWSHeader a => HasCty a where
   cty = jwsHeader . \f h@(JWSHeader { _jwsHeaderCty = a }) ->
     fmap (\a' -> h { _jwsHeaderCty = a' }) (f a)
-instance HasJWSHeader a => HasCrit a where
   crit = jwsHeader . \f h@(JWSHeader { _jwsHeaderCrit = a }) ->
     fmap (\a' -> h { _jwsHeaderCrit = a' }) (f a)
-
 
 -- | Construct a minimal header with the given algorithm and
 -- protection indicator for the /alg/ header.

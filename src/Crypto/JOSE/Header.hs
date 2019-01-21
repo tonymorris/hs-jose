@@ -51,20 +51,6 @@ module Crypto.JOSE.Header
   -- * Encoding headers
   , protectedParamsEncoded
   , unprotectedParams
-
-
-  -- * Header fields shared by JWS and JWE
-  , HasAlg(..)
-  , HasJku(..)
-  , HasJwk(..)
-  , HasKid(..)
-  , HasX5u(..)
-  , HasX5c(..)
-  , HasX5t(..)
-  , HasX5tS256(..)
-  , HasTyp(..)
-  , HasCty(..)
-  , HasCrit(..)
   ) where
 
 
@@ -80,11 +66,8 @@ import qualified Data.ByteString.Lazy as L
 import qualified Data.HashMap.Strict as M
 import qualified Data.Text as T
 
-import qualified Crypto.JOSE.JWA.JWS as JWA.JWS
-import Crypto.JOSE.JWK (JWK)
 import Crypto.JOSE.Types.Orphans (WrappedNonEmpty, WrappedURI)
 import Crypto.JOSE.Types.Internal (unpad)
-import qualified Crypto.JOSE.Types as Types
 import Network.URI(URI)
 
 -- | A thing with parameters.
@@ -372,36 +355,3 @@ parseCrit
 parseCrit reserved exts o = mapM (mapM (critObjectParser reserved exts o))
   -- TODO fail on duplicate strings
 
-
-class HasAlg a where
-  alg :: Lens' (a p) (HeaderParam p JWA.JWS.Alg)
-
-class HasJku a where
-  jku :: Lens' (a p) (Maybe (HeaderParam p Types.URI))
-
-class HasJwk a where
-  jwk :: Lens' (a p) (Maybe (HeaderParam p JWK))
-
-class HasKid a where
-  kid :: Lens' (a p) (Maybe (HeaderParam p T.Text))
-
-class HasX5u a where
-  x5u :: Lens' (a p) (Maybe (HeaderParam p Types.URI))
-
-class HasX5c a where
-  x5c :: Lens' (a p) (Maybe (HeaderParam p (NonEmpty Types.SignedCertificate)))
-
-class HasX5t a where
-  x5t :: Lens' (a p) (Maybe (HeaderParam p Types.Base64SHA1))
-
-class HasX5tS256 a where
-  x5tS256 :: Lens' (a p) (Maybe (HeaderParam p Types.Base64SHA256))
-
-class HasTyp a where
-  typ :: Lens' (a p) (Maybe (HeaderParam p T.Text))
-
-class HasCty a where
-  cty :: Lens' (a p) (Maybe (HeaderParam p T.Text))
-
-class HasCrit a where
-  crit :: Lens' (a p) (Maybe (NonEmpty T.Text))
