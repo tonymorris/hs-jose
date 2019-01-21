@@ -25,9 +25,7 @@ module Crypto.JOSE.Types.Orphans where
 import Data.List.NonEmpty (NonEmpty(..))
 import qualified Data.Text as T
 import Network.URI (URI, parseURI)
-#if ! MIN_VERSION_QuickCheck(2,9,0)
-import Test.QuickCheck(Arbitrary(arbitrary))
-#endif
+import Test.QuickCheck(Arbitrary(arbitrary), Gen, frequency)
 import Data.Foldable (toList)
 import qualified Data.Vector as V(fromList)
 
@@ -59,6 +57,9 @@ instance FromJSON a => FromJSON (WrappedNonEmpty a) where
 instance ToJSON a => ToJSON (WrappedNonEmpty a) where
   toJSON = Array . V.fromList . map toJSON . toList
 
+instance Arbitrary a => Arbitrary (WrappedNonEmpty a) where
+  arbitrary = (\h t -> WrappedNonEmpty (h :| t)) <$> arbitrary <*> arbitrary
+
 viewMaybe :: FromJSON a => Getting b a b -> Object -> Text -> Parser (Maybe b)
 viewMaybe k o t = fmap (fmap (view k)) (o .:? t)
 
@@ -82,8 +83,17 @@ instance FromJSON URI where
 instance ToJSON URI where
   toJSON = String . T.pack . show
 
+gettingGen :: Arbitrary s => Getting a s a -> Gen a
+gettingGen k = fmap (view k) arbitrary
 
-#if ! MIN_VERSION_QuickCheck(2,9,0)
-instance Arbitrary a => Arbitrary (NonEmpty a) where
-  arbitrary = (:|) <$> arbitrary <*> arbitrary
-#endif
+gettingGenNonEmpty :: Arbitrary a => Gen (NonEmpty a)
+gettingGenNonEmpty = gettingGen (_Wrapped :: Getting (NonEmpty a) (WrappedNonEmpty a) (NonEmpty a))
+
+genMaybe :: Gen a -> Gen (Maybe a)
+genMaybe g = frequency [(1, return Nothing), (3, fmap Just g)]
+
+gettingGenMaybe :: Arbitrary s => Getting a s a -> Gen (Maybe a)
+gettingGenMaybe k = genMaybe (fmap (view k) arbitrary)
+
+gettingGenMaybeNonEmpty :: Arbitrary a => Gen (Maybe (NonEmpty a))
+gettingGenMaybeNonEmpty = genMaybe gettingGenNonEmpty
