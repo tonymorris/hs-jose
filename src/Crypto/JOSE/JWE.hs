@@ -20,8 +20,9 @@
 module Crypto.JOSE.JWE
   (
     JWEHeader(..)
-
   , JWE(..)
+  , newJWEHeader
+  , wrap
   ) where
 
 import Control.Applicative ((<|>))
@@ -83,8 +84,8 @@ data JWEHeader p = JWEHeader
   deriving (Eq, Show)
 
 newJWEHeader :: ProtectionIndicator p => AlgWithParams -> Enc -> JWEHeader p
-newJWEHeader alg enc =
-  JWEHeader (Just alg) (HeaderParam getProtected enc) z z z z z z z z z z z
+newJWEHeader alg_ enc =
+  JWEHeader (Just alg_) (HeaderParam getProtected enc) z z z z z z z z z z z
   where z = Nothing
 
 instance HasParams JWEHeader where
@@ -105,21 +106,21 @@ instance HasParams JWEHeader where
     <*> (headerOptionalProtected "crit" hp hu
       >>= parseCrit critInvalidNames (extensions proxy)
         (fromMaybe mempty hp <> fromMaybe mempty hu))
-  params (JWEHeader alg enc zip' jku jwk kid x5u x5c x5t x5tS256 typ cty crit) =
+  params (JWEHeader _ enc zip' jku_ jwk_ kid_ x5u_ x5c_ x5t_ x5tS256_ typ_ cty_ crit_) =
     catMaybes
       [ undefined -- TODO
       , Just (view isProtected enc,      "enc" .= view param enc)
       , fmap (\p -> (True, "zip" .= p)) zip'
-      , fmap (\p -> (view isProtected p, "jku" .= view param p)) jku
-      , fmap (\p -> (view isProtected p, "jwk" .= view param p)) jwk
-      , fmap (\p -> (view isProtected p, "kid" .= view param p)) kid
-      , fmap (\p -> (view isProtected p, "x5u" .= view param p)) x5u
-      , fmap (\p -> (view isProtected p, "x5c" .= fmap Types.Base64X509 (view param p))) x5c
-      , fmap (\p -> (view isProtected p, "x5t" .= view param p)) x5t
-      , fmap (\p -> (view isProtected p, "x5t#S256" .= view param p)) x5tS256
-      , fmap (\p -> (view isProtected p, "typ" .= view param p)) typ
-      , fmap (\p -> (view isProtected p, "cty" .= view param p)) cty
-      , fmap (\p -> (True, "crit" .= p)) crit
+      , fmap (\p -> (view isProtected p, "jku" .= view param p)) jku_
+      , fmap (\p -> (view isProtected p, "jwk" .= view param p)) jwk_
+      , fmap (\p -> (view isProtected p, "kid" .= view param p)) kid_
+      , fmap (\p -> (view isProtected p, "x5u" .= view param p)) x5u_
+      , fmap (\p -> (view isProtected p, "x5c" .= fmap Types.Base64X509 (view param p))) x5c_
+      , fmap (\p -> (view isProtected p, "x5t" .= view param p)) x5t_
+      , fmap (\p -> (view isProtected p, "x5t#S256" .= view param p)) x5tS256_
+      , fmap (\p -> (view isProtected p, "typ" .= view param p)) typ_
+      , fmap (\p -> (view isProtected p, "cty" .= view param p)) cty_
+      , fmap (\p -> (True, "crit" .= p)) crit_
       ]
 
 
@@ -180,10 +181,10 @@ wrap
   -> KeyMaterial
   -> B.ByteString  -- ^ message (key to wrap)
   -> m (Either Error (AlgWithParams, B.ByteString))
-wrap alg@RSA_OAEP (RSAKeyMaterial k) m = bimap RSAError (alg,) <$>
+wrap alg_@RSA_OAEP (RSAKeyMaterial k) m = bimap RSAError (alg_,) <$>
   OAEP.encrypt (OAEP.OAEPParams SHA1 (mgf1 SHA1) Nothing) (rsaPublicKey k) m
 wrap RSA_OAEP _ _ = return $ Left $ AlgorithmMismatch "Cannot use RSA_OAEP with non-RSA key"
-wrap alg@RSA_OAEP_256 (RSAKeyMaterial k) m = bimap RSAError (alg,) <$>
+wrap alg_@RSA_OAEP_256 (RSAKeyMaterial k) m = bimap RSAError (alg_,) <$>
   OAEP.encrypt (OAEP.OAEPParams SHA256 (mgf1 SHA256) Nothing) (rsaPublicKey k) m
 wrap RSA_OAEP_256 _ _ = return $ Left $ AlgorithmMismatch "Cannot use RSA_OAEP_256 with non-RSA key"
 wrap A128KW (OctKeyMaterial (OctKeyParameters (Types.Base64Octets k))) m
