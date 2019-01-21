@@ -55,7 +55,7 @@ import Crypto.JOSE.JWA.JWE
 import Crypto.JOSE.JWK
 import qualified Crypto.JOSE.Types as Types
 import qualified Crypto.JOSE.Types.Internal as Types
-
+import Crypto.JOSE.Types.Orphans ((.|=))
 
 critInvalidNames :: [T.Text]
 critInvalidNames =
@@ -98,12 +98,12 @@ instance HasParams JWEHeader where
     <*> headerOptional "kid" hp hu
     <*> headerOptional "x5u" hp hu
     <*> ((fmap . fmap . fmap . fmap)
-          (\(Types.Base64X509 cert) -> cert) (headerOptional "x5c" hp hu))
+          (\(Types.Base64X509 cert) -> cert) (headerOptionalNonEmpty "x5c" hp hu))
     <*> headerOptional "x5t" hp hu
     <*> headerOptional "x5t#S256" hp hu
     <*> headerOptional "typ" hp hu
     <*> headerOptional "cty" hp hu
-    <*> (headerOptionalProtected "crit" hp hu
+    <*> (headerOptionalProtectedNonEmpty "crit" hp hu
       >>= parseCrit critInvalidNames (extensions proxy)
         (fromMaybe mempty hp <> fromMaybe mempty hu))
   params (JWEHeader _ enc zip' jku_ jwk_ kid_ x5u_ x5c_ x5t_ x5tS256_ typ_ cty_ crit_) =
@@ -115,12 +115,12 @@ instance HasParams JWEHeader where
       , fmap (\p -> (view isProtected p, "jwk" .= view param p)) jwk_
       , fmap (\p -> (view isProtected p, "kid" .= view param p)) kid_
       , fmap (\p -> (view isProtected p, "x5u" .= view param p)) x5u_
-      , fmap (\p -> (view isProtected p, "x5c" .= fmap Types.Base64X509 (view param p))) x5c_
+      , fmap (\p -> (view isProtected p, "x5c" .|= fmap Types.Base64X509 (view param p))) x5c_
       , fmap (\p -> (view isProtected p, "x5t" .= view param p)) x5t_
       , fmap (\p -> (view isProtected p, "x5t#S256" .= view param p)) x5tS256_
       , fmap (\p -> (view isProtected p, "typ" .= view param p)) typ_
       , fmap (\p -> (view isProtected p, "cty" .= view param p)) cty_
-      , fmap (\p -> (True, "crit" .= p)) crit_
+      , fmap (\p -> (True, "crit" .|= p)) crit_
       ]
 
 

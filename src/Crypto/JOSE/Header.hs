@@ -36,7 +36,11 @@ module Crypto.JOSE.Header
   , headerRequired
   , headerRequiredProtected
   , headerOptional
+  , headerOptional'
+  , headerOptionalNonEmpty
   , headerOptionalProtected
+  , headerOptionalProtected'
+  , headerOptionalProtectedNonEmpty
 
   -- * Parsing headers
   , parseParams
@@ -66,7 +70,7 @@ import Data.List.NonEmpty (NonEmpty)
 import Data.Monoid ((<>))
 import Data.Proxy (Proxy(..))
 
-import Control.Lens (Lens', Getter, to)
+import Control.Lens (Lens', Getter, to, Getting, view, _Wrapped)
 import Data.Aeson (FromJSON(..), Object, Value, encode, object)
 import Data.Aeson.Types (Pair, Parser)
 import qualified Data.ByteString.Base64.URL.Lazy as B64UL
@@ -76,10 +80,9 @@ import qualified Data.Text as T
 
 import qualified Crypto.JOSE.JWA.JWS as JWA.JWS
 import Crypto.JOSE.JWK (JWK)
-import Crypto.JOSE.Types.Orphans ()
+import Crypto.JOSE.Types.Orphans (WrappedNonEmpty)
 import Crypto.JOSE.Types.Internal (unpad)
 import qualified Crypto.JOSE.Types as Types
-
 
 -- | A thing with parameters.
 --
@@ -235,6 +238,25 @@ headerOptional k hp hu = case (hp >>= M.lookup k, hu >>= M.lookup k) of
     getUnprotected
   (Nothing, Nothing)  -> pure Nothing
 
+headerOptional'
+  :: (FromJSON a, ProtectionIndicator p)
+  => Getting b a b
+  -> T.Text
+  -> Maybe Object
+  -> Maybe Object
+  -> Parser (Maybe (HeaderParam p b))
+headerOptional' j k hp hu =
+  fmap (fmap (fmap (view j))) (headerOptional k hp hu)
+
+headerOptionalNonEmpty
+  :: (FromJSON a, ProtectionIndicator p)
+  => T.Text
+  -> Maybe Object
+  -> Maybe Object
+  -> Parser (Maybe (HeaderParam p (NonEmpty a)))
+headerOptionalNonEmpty =
+  headerOptional' (_Wrapped :: Getting (NonEmpty a) (WrappedNonEmpty a) (NonEmpty a))
+
 -- | Parse an optional parameter that, if present, MUST be carried
 -- in the protected header.
 --
@@ -249,6 +271,25 @@ headerOptionalProtected k hp hu = case (hp >>= M.lookup k, hu >>= M.lookup k) of
   (_, Just _) -> fail $ "header must be protected: " ++ show k
   (Just v, _) -> Just <$> parseJSON v
   _           -> pure Nothing
+
+headerOptionalProtected'
+  :: FromJSON a
+  => Getting b a b
+  -> T.Text
+  -> Maybe Object
+  -> Maybe Object
+  -> Parser (Maybe b)
+headerOptionalProtected' j k hp hu =
+  fmap (fmap (view j)) (headerOptionalProtected k hp hu)
+
+headerOptionalProtectedNonEmpty
+  :: FromJSON a
+  => T.Text
+  -> Maybe Object
+  -> Maybe Object
+  -> Parser (Maybe (NonEmpty a))
+headerOptionalProtectedNonEmpty =
+  headerOptionalProtected' (_Wrapped :: Getting (NonEmpty a) (WrappedNonEmpty a) (NonEmpty a))
 
 -- | Parse a required parameter that may be carried in either
 -- the protected or the unprotected header.
