@@ -23,7 +23,8 @@ module Crypto.JOSE.Types.Orphans where
 
 import Data.List.NonEmpty (NonEmpty(..))
 import qualified Data.Text as T
-import Network.URI (URI, parseURI)
+import Network.URI (URI)
+import Network.URI as Network (parseURI)
 import Test.QuickCheck(Arbitrary(arbitrary), Gen, frequency)
 import Data.Foldable (toList)
 import qualified Data.Vector as V(fromList)
@@ -74,15 +75,11 @@ instance ToJSON a => ToJSON (WrappedNonEmpty a) where
 instance Arbitrary a => Arbitrary (WrappedNonEmpty a) where
   arbitrary = (\h t -> WrappedNonEmpty (h :| t)) <$> arbitrary <*> arbitrary
 
-(.|=) :: (ToJSON a, KeyValue kv) => Text -> NonEmpty a -> kv
-(.|=) = previewEqual (_Wrapped :: AReview (WrappedNonEmpty a) (NonEmpty a))
+kvNonEmpty :: (ToJSON a, KeyValue kv) => Text -> NonEmpty a -> kv
+kvNonEmpty = previewEqual (_Wrapped :: AReview (WrappedNonEmpty a) (NonEmpty a))
 
-infixr 8 .|=
-
-(.:|?) :: FromJSON a => Object -> Text -> Parser (Maybe (NonEmpty a))
-(.:|?) = viewMaybe (_Wrapped :: Getting (NonEmpty a) (WrappedNonEmpty a) (NonEmpty a))
-
-infixl 9 .:|?
+parseNonEmpty :: FromJSON a => Object -> Text -> Parser (Maybe (NonEmpty a))
+parseNonEmpty = viewMaybe (_Wrapped :: Getting (NonEmpty a) (WrappedNonEmpty a) (NonEmpty a))
 
 gettingGenNonEmpty :: Arbitrary a => Gen (NonEmpty a)
 gettingGenNonEmpty = gettingGen (_Wrapped :: Getting (NonEmpty a) (WrappedNonEmpty a) (NonEmpty a))
@@ -106,17 +103,13 @@ instance Wrapped WrappedURI where
 
 instance FromJSON WrappedURI where
   parseJSON = withText "URI" $
-    maybe (fail "not a URI") return . fmap WrappedURI . parseURI . T.unpack
+    maybe (fail "not a URI") return . fmap WrappedURI . Network.parseURI . T.unpack
 
 instance ToJSON WrappedURI where
   toJSON = String . T.pack . show . view _Wrapped
 
-(.#=) :: KeyValue kv => Text -> URI -> kv
-(.#=) = previewEqual (_Wrapped :: AReview WrappedURI URI)
+kvURI :: KeyValue kv => Text -> URI -> kv
+kvURI = previewEqual (_Wrapped :: AReview WrappedURI URI)
 
-infixr 8 .#=
-
-(.:#?) :: Object -> Text -> Parser (Maybe URI)
-(.:#?) = viewMaybe (_Wrapped :: Getting URI WrappedURI URI)
-
-infixl 9 .:#?
+parseURI :: Object -> Text -> Parser (Maybe URI)
+parseURI = viewMaybe (_Wrapped :: Getting URI WrappedURI URI)

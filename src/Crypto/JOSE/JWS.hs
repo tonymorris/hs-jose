@@ -122,7 +122,7 @@ import Crypto.JOSE.JWK.Store
 import Crypto.JOSE.Header
 import qualified Crypto.JOSE.Types as Types
 import qualified Crypto.JOSE.Types.Internal as Types
-import Crypto.JOSE.Types.Orphans ((.|=), (.#=))
+import Crypto.JOSE.Types.Orphans (kvNonEmpty, kvURI)
 import Network.URI(URI)
 import Data.Text(Text)
 import Data.X509(SignedCertificate)
@@ -481,16 +481,16 @@ instance HasParams JWSHeader where
   params h =
     catMaybes
       [ Just (view (alg . isProtected) h, "alg" .= (view (alg . param) h))
-      , fmap (\p -> (view isProtected p, "jku" .#= view param p)) (view jku h)
+      , fmap (\p -> (view isProtected p, "jku" `kvURI` view param p)) (view jku h)
       , fmap (\p -> (view isProtected p, "jwk" .= view param p)) (view jwk h)
       , fmap (\p -> (view isProtected p, "kid" .= view param p)) (view kid h)
-      , fmap (\p -> (view isProtected p, "x5u" .#= view param p)) (view x5u h)
-      , fmap (\p -> (view isProtected p, "x5c" .|= fmap Types.Base64X509 (view param p))) (view x5c h)
+      , fmap (\p -> (view isProtected p, "x5u" `kvURI` view param p)) (view x5u h)
+      , fmap (\p -> (view isProtected p, "x5c" `kvNonEmpty` fmap Types.Base64X509 (view param p))) (view x5c h)
       , fmap (\p -> (view isProtected p, "x5t" .= view param p)) (view x5t h)
       , fmap (\p -> (view isProtected p, "x5t#S256" .= view param p)) (view x5tS256 h)
       , fmap (\p -> (view isProtected p, "typ" .= view param p)) (view typ h)
       , fmap (\p -> (view isProtected p, "cty" .= view param p)) (view cty h)
-      , fmap (\p -> (True, "crit" .|= p)) (view crit h)
+      , fmap (\p -> (True, "crit" `kvNonEmpty` p)) (view crit h)
       ]
 
 
