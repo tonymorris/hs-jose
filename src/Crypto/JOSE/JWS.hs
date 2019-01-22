@@ -36,7 +36,6 @@ doJwsVerify jwk jws = runExceptT $ 'verifyJWS'' jwk jws
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE DefaultSignatures #-}
-{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Crypto.JOSE.JWS
   (
