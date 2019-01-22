@@ -34,7 +34,6 @@ doJwsVerify jwk jws = runExceptT $ 'verifyJWS'' jwk jws
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE MonoLocalBinds #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE DefaultSignatures #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
@@ -418,7 +417,6 @@ data Signature p a = Signature
   (Maybe T.Text)      -- Encoded protected header, if available
   (a p)               -- Header
   Types.Base64Octets  -- Signature
-  deriving (Show)
 
 -- | Getter for header of a signature
 header :: Getter (Signature p a) (a p)
@@ -428,8 +426,12 @@ header = to (\(Signature _ h _) -> h)
 signature :: (Cons s s Word8 Word8, AsEmpty s) => Getter (Signature p a) s
 signature = to (\(Signature _ _ (Types.Base64Octets s)) -> s) . recons
 
-instance (Eq (a p)) => Eq (Signature p a) where
-  Signature _ h s == Signature _ h' s' = h == h' && s == s'
+instance (Eq1 a, Eq p) => Eq (Signature p a) where
+  Signature _ h s == Signature _ h' s' = (h `eq1` h') && s == s'
+
+instance (Show1 a, Show p) => Show (Signature p a) where
+  showsPrec n (Signature t h s) =
+    showString "Signature " . showParen True (showsPrec n t . showString ", " . showsPrec1 n h . showString ", " . showsPrec n s)
 
 instance (HasParams a, ProtectionIndicator p) => FromJSON (Signature p a) where
   parseJSON = withObject "signature" (\o -> Signature
@@ -533,11 +535,11 @@ type FlattenedJWS = JWS Identity Protection
 --
 type CompactJWS = JWS Identity ()
 
-instance (Eq1 t, Eq (Signature p a)) => Eq (JWS t p a) where
+instance (Eq1 t, Eq1 a, Eq p) => Eq (JWS t p a) where
   JWS p sigs == JWS p' sigs' =
     p == p' && (sigs `eq1` sigs')
 
-instance (Show1 t, Show (Signature p a)) => Show (JWS t p a) where
+instance (Show1 t, Show1 a, Show p) => Show (JWS t p a) where
   showsPrec n (JWS p sigs) = 
     showString "JWS " . showsPrec n p . showString " " . showsPrec1 n sigs
 

@@ -18,7 +18,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE DefaultSignatures #-}
-{-# LANGUAGE MonoLocalBinds #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 {-|
