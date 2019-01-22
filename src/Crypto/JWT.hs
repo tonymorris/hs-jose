@@ -17,7 +17,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE MonoLocalBinds #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -124,7 +124,7 @@ import Data.Maybe
 import qualified Data.String
 
 import Control.Lens (
-  makeClassy, makeClassyPrisms, makePrisms,
+  makeClassyPrisms, makePrisms,
   Lens', _Just, over, preview, view,
   Prism', prism', Cons, iso, AsEmpty)
 import Control.Lens.Cons.Extras (recons)
@@ -368,32 +368,47 @@ data JWTValidationSettings = JWTValidationSettings
   , _jwtValidationSettingsAudiencePredicate :: StringOrURI -> Bool
   , _jwtValidationSettingsIssuerPredicate :: StringOrURI -> Bool
   }
-makeClassy ''JWTValidationSettings
+
+class (
+        HasAllowedSkew a
+      , HasAudiencePredicate a
+      , HasIssuerPredicate a
+      , HasCheckIssuedAt a
+      ) =>
+  HasJWTValidationSettings a where
+  jwtValidationSettings :: Lens' a JWTValidationSettings
+
+instance HasJWTValidationSettings JWTValidationSettings where
+  jwtValidationSettings = id
+
+instance HasAllowedSkew JWTValidationSettings where
+instance HasAudiencePredicate JWTValidationSettings where
+instance HasIssuerPredicate JWTValidationSettings where
+instance HasCheckIssuedAt JWTValidationSettings where
 
 -- | Maximum allowed skew when validating the /nbf/, /exp/ and /iat/ claims.
 class HasAllowedSkew s where
   allowedSkew :: Lens' s NominalDiffTime
+  default allowedSkew :: HasJWTValidationSettings s => Lens' s NominalDiffTime
+  allowedSkew = jwtValidationSettings . allowedSkew
 
 -- | Predicate for checking values in the /aud/ claim.
 class HasAudiencePredicate s where
   audiencePredicate :: Lens' s (StringOrURI -> Bool)
+  default audiencePredicate :: HasJWTValidationSettings s => Lens' s (StringOrURI -> Bool)
+  audiencePredicate = jwtValidationSettings . audiencePredicate
 
 -- | Predicate for checking the /iss/ claim.
 class HasIssuerPredicate s where
   issuerPredicate :: Lens' s (StringOrURI -> Bool)
+  default issuerPredicate :: HasJWTValidationSettings s => Lens' s (StringOrURI -> Bool)
+  issuerPredicate = jwtValidationSettings . issuerPredicate
 
 -- | Whether to check that the /iat/ claim is not in the future.
 class HasCheckIssuedAt s where
   checkIssuedAt :: Lens' s Bool
-
-instance HasJWTValidationSettings a => HasAllowedSkew a where
-  allowedSkew = jwtValidationSettingsAllowedSkew
-instance HasJWTValidationSettings a => HasAudiencePredicate a where
-  audiencePredicate = jwtValidationSettingsAudiencePredicate
-instance HasJWTValidationSettings a => HasIssuerPredicate a where
-  issuerPredicate = jwtValidationSettingsIssuerPredicate
-instance HasJWTValidationSettings a => HasCheckIssuedAt a where
-  checkIssuedAt = jwtValidationSettingsCheckIssuedAt
+  default checkIssuedAt :: HasJWTValidationSettings s => Lens' s Bool
+  checkIssuedAt = jwtValidationSettings . checkIssuedAt
 
 -- | Acquire the default validation settings.
 --
