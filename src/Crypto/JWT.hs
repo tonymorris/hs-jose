@@ -368,7 +368,8 @@ data JWTValidationSettings = JWTValidationSettings
   }
 
 class (
-        HasAllowedSkew a
+        HasValidationSettings a
+      , HasAllowedSkew a
       , HasAudiencePredicate a
       , HasIssuerPredicate a
       , HasCheckIssuedAt a
@@ -379,10 +380,29 @@ class (
 instance HasJWTValidationSettings JWTValidationSettings where
   jwtValidationSettings = id
 
+instance HasAlgorithms JWTValidationSettings where
+
+instance HasValidationPolicy JWTValidationSettings where
+
+instance HasValidationSettings JWTValidationSettings where
+  validationSettings f (JWTValidationSettings v s i a p) =
+    fmap (\v' -> JWTValidationSettings v' s i a p) (f v)
+
 instance HasAllowedSkew JWTValidationSettings where
+  allowedSkew f (JWTValidationSettings v s i a p) =
+    fmap (\s' -> JWTValidationSettings v s' i a p) (f s)
+
 instance HasAudiencePredicate JWTValidationSettings where
+  audiencePredicate f (JWTValidationSettings v s i a p) =
+    fmap (\a' -> JWTValidationSettings v s i a' p) (f a)
+
 instance HasIssuerPredicate JWTValidationSettings where
+  issuerPredicate f (JWTValidationSettings v s i a p) =
+    fmap (\p' -> JWTValidationSettings v s i a p') (f p)
+
 instance HasCheckIssuedAt JWTValidationSettings where
+  checkIssuedAt f (JWTValidationSettings v s i a p) =
+    fmap (\i' -> JWTValidationSettings v s i' a p) (f i)
 
 -- | Maximum allowed skew when validating the /nbf/, /exp/ and /iat/ claims.
 class HasAllowedSkew s where
