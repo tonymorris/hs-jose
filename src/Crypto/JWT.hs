@@ -370,9 +370,6 @@ data JWTValidationSettings = JWTValidationSettings
   }
 makeClassy ''JWTValidationSettings
 
-instance HasJWTValidationSettings a => HasValidationSettings a where
-  validationSettings = jwtValidationSettingsValidationSettings
-
 -- | Maximum allowed skew when validating the /nbf/, /exp/ and /iat/ claims.
 class HasAllowedSkew s where
   allowedSkew :: Lens' s NominalDiffTime

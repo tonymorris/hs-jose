@@ -266,7 +266,59 @@ class HasCrit a where
   default crit :: HasJWSHeader a => Lens' (a p) (Maybe (NonEmpty Text))
   crit = jwsHeader . crit
 
-class HasJWSHeader a where
+{-
+
+class HasAlg a where
+  alg :: Lens' (a p) (HeaderParam p Alg)
+  default alg :: HasJWSHeader a => Lens' (a p) (HeaderParam p Alg)
+  alg = jwsHeader . alg
+
+class HasJku a where
+  jku :: Lens' (a p) (Maybe (HeaderParam p URI))
+  default jku :: HasJWSHeader a => Lens' (a p) (Maybe (HeaderParam p URI))
+  jku = jwsHeader . jku
+
+class HasJwk a where
+  jwk :: Lens' (a p) (Maybe (HeaderParam p JWK))  
+  default jwk :: HasJWSHeader a => Lens' (a p) (Maybe (HeaderParam p JWK))
+  jwk = jwsHeader . jwk
+
+class HasKid a where
+  kid :: Lens' (a p) (Maybe (HeaderParam p Text))
+  default kid :: HasJWSHeader a => Lens' (a p) (Maybe (HeaderParam p Text))
+  kid = jwsHeader . kid
+
+class HasX5u a where
+  x5u :: Lens' (a p) (Maybe (HeaderParam p URI))
+  default x5u :: HasJWSHeader a => Lens' (a p) (Maybe (HeaderParam p URI))
+  x5u = jwsHeader . x5u
+
+class HasX5c a where
+  x5c :: Lens' (a p) (Maybe (HeaderParam p (NonEmpty SignedCertificate)))
+  default x5c :: HasJWSHeader a => Lens' (a p) (Maybe (HeaderParam p (NonEmpty SignedCertificate)))
+  x5c = jwsHeader . x5c
+
+class HasX5t a where
+  x5t :: Lens' (a p) (Maybe (HeaderParam p Base64SHA1))
+  default x5t :: HasJWSHeader a => Lens' (a p) (Maybe (HeaderParam p Base64SHA1))
+  x5t = jwsHeader . x5t
+
+  -}
+class
+  (
+    HasAlg a
+  , HasJku a
+  , HasJwk a
+  , HasKid a
+  , HasX5u a
+  , HasX5c a
+  , HasX5t a
+  , HasX5tS256 a
+  , HasTyp a
+  , HasCty a
+  , HasCrit a
+  ) =>
+  HasJWSHeader a where
   jwsHeader :: Lens' (a p) (JWSHeader p)
   
 instance HasAlg JWSHeader where
@@ -594,29 +646,35 @@ data ValidationSettings = ValidationSettings
   (S.Set Alg)
   ValidationPolicy
 
-class HasValidationSettings a where
+class (HasValidationPolicy a, HasAlgorithms a) => HasValidationSettings a where
   validationSettings :: Lens' a ValidationSettings
-
-  validationSettingsAlgorithms :: Lens' a (S.Set Alg)
-  validationSettingsAlgorithms = validationSettings . go where
-    go f (ValidationSettings algs pol) =
-      (\algs' -> ValidationSettings algs' pol) <$> f algs
-
-  validationSettingsValidationPolicy :: Lens' a ValidationPolicy
-  validationSettingsValidationPolicy = validationSettings . go where
-    go f (ValidationSettings algs pol) =
-      (\pol' -> ValidationSettings algs pol') <$> f pol
 
 instance HasValidationSettings ValidationSettings where
   validationSettings = id
-
+  
 class HasAlgorithms s where
   algorithms :: Lens' s (S.Set Alg)
+  default algorithms :: HasValidationSettings s => Lens' s (S.Set Alg)
+  algorithms = validationSettings . algorithms
+
+instance HasAlgorithms (S.Set Alg) where
+  algorithms = id
+
+instance HasAlgorithms ValidationSettings where
+  algorithms f (ValidationSettings a p) =
+    fmap (\a' -> ValidationSettings a' p) (f a)
+
 class HasValidationPolicy s where
   validationPolicy :: Lens' s ValidationPolicy
+  default validationPolicy :: HasValidationSettings s => Lens' s ValidationPolicy
+  validationPolicy = validationSettings . validationPolicy
 
-instance HasValidationSettings a => HasValidationPolicy a where
-  validationPolicy = validationSettingsValidationPolicy
+instance HasValidationPolicy ValidationPolicy where
+  validationPolicy = id
+
+instance HasValidationPolicy ValidationSettings where
+  validationPolicy f (ValidationSettings a p) =
+    fmap (\p' -> ValidationSettings a p') (f p)
 
 -- | The default validation settings.
 --
@@ -661,7 +719,7 @@ verifyJWS' = verifyJWS defaultValidationSettings
 -- Returns the payload if successfully verified.
 --
 verifyJWS
-  ::  ( HasValidationSettings a, HasValidationPolicy a, AsError e, MonadError e m
+  ::  ( HasValidationSettings a, AsError e, MonadError e m
       , HasAlg h, HasParams h
       , VerificationKeyStore m (h p) s k
       , Cons s s Word8 Word8, AsEmpty s
@@ -675,7 +733,7 @@ verifyJWS
 verifyJWS = verifyJWSWithPayload pure
 
 verifyJWSWithPayload
-  ::  ( HasValidationSettings a, HasValidationPolicy a, AsError e, MonadError e m
+  ::  ( HasValidationSettings a, AsError e, MonadError e m
       , HasAlg h, HasParams h
       , VerificationKeyStore m (h p) payload k
       , Cons s s Word8 Word8, AsEmpty s
@@ -690,7 +748,7 @@ verifyJWSWithPayload
 verifyJWSWithPayload dec conf k (JWS p@(Types.Base64Octets p') sigs) =
   let
     algs :: S.Set Alg
-    algs = conf ^. validationSettingsAlgorithms
+    algs = conf ^. algorithms
     policy :: ValidationPolicy
     policy = conf ^. validationPolicy
     shouldValidateSig = (`elem` algs) . view (header . alg . param)

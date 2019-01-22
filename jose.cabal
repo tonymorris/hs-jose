@@ -74,13 +74,13 @@ library
     , semigroups >= 0.15
     , template-haskell >= 2.4
     , safe >= 0.3
-    , aeson >= 0.8.0.1
+    , aeson >= 0.8.0.1 && < 0.11.1
     , unordered-containers == 0.2.*
     , bytestring == 0.10.*
     , text >= 1.1
     , time >= 1.5
     , network-uri >= 2.6
-    , QuickCheck >= 2
+    , QuickCheck >= 2 && < 2.9
     , quickcheck-instances
     , x509 >= 1.4
     , vector
