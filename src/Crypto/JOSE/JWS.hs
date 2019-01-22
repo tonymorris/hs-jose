@@ -34,7 +34,6 @@ doJwsVerify jwk jws = runExceptT $ 'verifyJWS'' jwk jws
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE MonoLocalBinds #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE DefaultSignatures #-}
@@ -131,6 +130,7 @@ import Data.Text(Text)
 import Data.X509(SignedCertificate)
 import Crypto.JOSE.Types(Base64SHA1)
 import Crypto.JOSE.Types(Base64SHA256)
+import Data.Functor.Classes(Eq1, eq1, Show1, showsPrec1)
 
 {- $extending
 
@@ -533,11 +533,13 @@ type FlattenedJWS = JWS Identity Protection
 --
 type CompactJWS = JWS Identity ()
 
-instance (Eq (t (Signature p a))) => Eq (JWS t p a) where
-  JWS p sigs == JWS p' sigs' = p == p' && sigs == sigs'
+instance (Eq1 t, Eq (Signature p a)) => Eq (JWS t p a) where
+  JWS p sigs == JWS p' sigs' =
+    p == p' && (sigs `eq1` sigs')
 
-instance (Show (t (Signature p a))) => Show (JWS t p a) where
-  show (JWS p sigs) = "JWS " <> show p <> " " <> show sigs
+instance (Show1 t, Show (Signature p a)) => Show (JWS t p a) where
+  showsPrec n (JWS p sigs) = 
+    showString "JWS " . showsPrec n p . showString " " . showsPrec1 n sigs
 
 signatures :: Foldable t => Fold (JWS t p a) (Signature p a)
 signatures = folding (\(JWS _ sigs) -> sigs)
