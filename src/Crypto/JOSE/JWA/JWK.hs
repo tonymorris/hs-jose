@@ -107,7 +107,7 @@ import qualified Crypto.JOSE.JWA.JWS as JWA.JWS
 import qualified Crypto.JOSE.TH
 import qualified Crypto.JOSE.Types as Types
 import qualified Crypto.JOSE.Types.Internal as Types
-import Crypto.JOSE.Types.Orphans (parseNonEmpty, kvNonEmpty, gettingGenMaybeNonEmpty)
+import Crypto.JOSE.Types.WrappedNonEmpty (parseNonEmpty, kvNonEmpty, gettingGenMaybeNonEmpty)
 
 -- | \"crv\" (Curve) Parameter
 --

@@ -66,7 +66,8 @@ import qualified Data.ByteString.Lazy as L
 import qualified Data.HashMap.Strict as M
 import qualified Data.Text as T
 
-import Crypto.JOSE.Types.Orphans (WrappedNonEmpty, WrappedURI)
+import Crypto.JOSE.Types.WrappedURI(WrappedURI)
+import Crypto.JOSE.Types.WrappedNonEmpty(WrappedNonEmpty)
 import Crypto.JOSE.Types.Internal (unpad)
 import Network.URI(URI)
 

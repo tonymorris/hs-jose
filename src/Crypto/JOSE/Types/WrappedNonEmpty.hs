@@ -12,42 +12,23 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-{-# LANGUAGE CPP #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE DeriveTraversable #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies #-}
 
-module Crypto.JOSE.Types.Orphans where
+module Crypto.JOSE.Types.WrappedNonEmpty where
 
 import Data.List.NonEmpty (NonEmpty(..))
-import qualified Data.Text as T
-import Network.URI (URI)
-import Network.URI as Network (parseURI)
-import Test.QuickCheck(Arbitrary(arbitrary), Gen, frequency)
+import Test.QuickCheck(Arbitrary(arbitrary), Gen)
 import Data.Foldable (toList)
 import qualified Data.Vector as V(fromList)
 
-import Control.Lens(Rewrapped, Wrapped(_Wrapped', Unwrapped), _Wrapped, Getting, AReview, iso, view, review)
+import Control.Lens(Rewrapped, Wrapped(_Wrapped', Unwrapped), _Wrapped, Getting, AReview, iso)
 import Data.Aeson
 import Data.Aeson.Types
 import Data.Text(Text)
-
-viewMaybe :: FromJSON a => Getting b a b -> Object -> Text -> Parser (Maybe b)
-viewMaybe k o t = fmap (fmap (view k)) (o .:? t)
-
-previewEqual :: (ToJSON v, KeyValue kv) => AReview v a -> Text -> a -> kv
-previewEqual k t v = t .= review k v
-
-gettingGen :: Arbitrary s => Getting a s a -> Gen a
-gettingGen k = fmap (view k) arbitrary
-
-genMaybe :: Gen a -> Gen (Maybe a)
-genMaybe g = frequency [(1, return Nothing), (3, fmap Just g)]
-
-gettingGenMaybe :: Arbitrary s => Getting a s a -> Gen (Maybe a)
-gettingGenMaybe k = genMaybe (fmap (view k) arbitrary)
+import Crypto.JOSE.Types.Internal
 
 newtype WrappedNonEmpty a =
   WrappedNonEmpty (NonEmpty a)
@@ -86,30 +67,3 @@ gettingGenNonEmpty = gettingGen (_Wrapped :: Getting (NonEmpty a) (WrappedNonEmp
 
 gettingGenMaybeNonEmpty :: Arbitrary a => Gen (Maybe (NonEmpty a))
 gettingGenMaybeNonEmpty = genMaybe gettingGenNonEmpty
-
-newtype WrappedURI =
-  WrappedURI URI
-  deriving (Eq, Ord, Show)
-
-instance WrappedURI ~ x => Rewrapped WrappedURI x
-
-instance Wrapped WrappedURI where
-  type Unwrapped WrappedURI =
-    URI
-  _Wrapped' =
-    iso
-      (\(WrappedURI x) -> x)
-      WrappedURI
-
-instance FromJSON WrappedURI where
-  parseJSON = withText "URI" $
-    maybe (fail "not a URI") return . fmap WrappedURI . Network.parseURI . T.unpack
-
-instance ToJSON WrappedURI where
-  toJSON = String . T.pack . show . view _Wrapped
-
-kvURI :: KeyValue kv => Text -> URI -> kv
-kvURI = previewEqual (_Wrapped :: AReview WrappedURI URI)
-
-parseURI :: Object -> Text -> Parser (Maybe URI)
-parseURI = viewMaybe (_Wrapped :: Getting URI WrappedURI URI)

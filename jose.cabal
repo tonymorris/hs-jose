@@ -58,7 +58,8 @@ library
   other-modules:
     Crypto.JOSE.TH
     Crypto.JOSE.Types.Internal
-    Crypto.JOSE.Types.Orphans
+    Crypto.JOSE.Types.WrappedNonEmpty
+    Crypto.JOSE.Types.WrappedURI
 
   build-depends:
     base >= 4.8 && < 5

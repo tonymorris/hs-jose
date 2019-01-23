@@ -55,7 +55,8 @@ import Crypto.JOSE.JWA.JWE
 import Crypto.JOSE.JWK
 import qualified Crypto.JOSE.Types as Types
 import qualified Crypto.JOSE.Types.Internal as Types
-import Crypto.JOSE.Types.Orphans (kvNonEmpty, kvURI)
+import Crypto.JOSE.Types.WrappedNonEmpty(kvNonEmpty)
+import Crypto.JOSE.Types.WrappedURI(kvURI)
 
 critInvalidNames :: [T.Text]
 critInvalidNames =

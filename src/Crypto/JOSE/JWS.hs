@@ -122,7 +122,8 @@ import Crypto.JOSE.JWK.Store
 import Crypto.JOSE.Header
 import qualified Crypto.JOSE.Types as Types
 import qualified Crypto.JOSE.Types.Internal as Types
-import Crypto.JOSE.Types.Orphans (kvNonEmpty, kvURI)
+import Crypto.JOSE.Types.WrappedNonEmpty(kvNonEmpty)
+import Crypto.JOSE.Types.WrappedURI(kvURI)
 import Network.URI(URI)
 import Data.Text(Text)
 import Data.X509(SignedCertificate)
