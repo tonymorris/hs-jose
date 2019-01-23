@@ -49,7 +49,6 @@ import Test.QuickCheck.Instances ()
 
 import Crypto.Number.Basic (log2)
 import Crypto.JOSE.Types.Internal
-import Crypto.JOSE.Types.Orphans ()
 
 
 -- | A base64url encoded octet sequence interpreted as an integer.
