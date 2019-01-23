@@ -43,7 +43,7 @@ import Data.Aeson
 import Data.Aeson.Types (Parser)
 import qualified Data.ByteString as B
 import Data.X509
-import Network.URI (URI)
+import Text.URI (URI)
 import Test.QuickCheck
 import Test.QuickCheck.Instances ()
 

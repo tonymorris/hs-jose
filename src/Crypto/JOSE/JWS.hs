@@ -124,7 +124,7 @@ import qualified Crypto.JOSE.Types as Types
 import qualified Crypto.JOSE.Types.Internal as Types
 import Crypto.JOSE.Types.WrappedNonEmpty(kvNonEmpty)
 import Crypto.JOSE.Types.WrappedURI(kvURI)
-import Network.URI(URI)
+import Text.URI(URI)
 import Data.Text(Text)
 import Data.X509(SignedCertificate)
 import Crypto.JOSE.Types(Base64SHA1)

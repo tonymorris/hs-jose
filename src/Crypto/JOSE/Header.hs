@@ -69,7 +69,7 @@ import qualified Data.Text as T
 import Crypto.JOSE.Types.WrappedURI(WrappedURI)
 import Crypto.JOSE.Types.WrappedNonEmpty(WrappedNonEmpty)
 import Crypto.JOSE.Types.Internal (unpad)
-import Network.URI(URI)
+import Text.URI(URI)
 
 -- | A thing with parameters.
 --

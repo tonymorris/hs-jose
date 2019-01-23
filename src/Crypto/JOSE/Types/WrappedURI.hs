@@ -19,8 +19,8 @@
 module Crypto.JOSE.Types.WrappedURI where
   
 import qualified Data.Text as T
-import Network.URI (URI)
-import Network.URI as Network (parseURI)
+import Text.URI (URI)
+import Text.URI as URI (mkURI)
 
 import Control.Lens(Rewrapped, Wrapped(_Wrapped', Unwrapped), _Wrapped, Getting, AReview, iso, view)
 import Data.Aeson
@@ -44,7 +44,7 @@ instance Wrapped WrappedURI where
 
 instance FromJSON WrappedURI where
   parseJSON = withText "URI" $
-    maybe (fail "not a URI") return . fmap WrappedURI . Network.parseURI . T.unpack
+    maybe (fail "not a URI") return . fmap WrappedURI . URI.mkURI
 
 instance ToJSON WrappedURI where
   toJSON = String . T.pack . show . view _Wrapped

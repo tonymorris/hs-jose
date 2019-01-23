@@ -84,7 +84,8 @@ library
     time                 >= 1.5 && < 1.9,
     unordered-containers == 0.2.*,
     vector               >= 0.12 && < 0.13,
-    x509                 >= 1.4 && < 1.8
+    x509                 >= 1.4 && < 1.8,
+    modern-uri
 
   ghc-options:    -Wall
   hs-source-dirs: src

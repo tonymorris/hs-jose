@@ -134,7 +134,7 @@ import qualified Data.HashMap.Strict as M
 import qualified Data.Text as T
 import Data.Time (NominalDiffTime, UTCTime, addUTCTime)
 import Data.Time.Clock.POSIX (posixSecondsToUTCTime, utcTimeToPOSIXSeconds)
-import Network.URI (parseURI)
+import Text.URI (mkURI)
 
 import Crypto.JOSE
 import Crypto.JOSE.Types
@@ -179,7 +179,7 @@ stringOrUri = iso (view recons) (view recons) . prism' rev fwd
   rev (Arbitrary s) = s
   rev (OrURI x) = T.pack (show x)
   fwd s
-    | T.any (== ':') s = OrURI <$> parseURI (T.unpack s)
+    | T.any (== ':') s = OrURI <$> mkURI s
     | otherwise = pure (Arbitrary s)
 
 string :: Prism' StringOrURI T.Text
