@@ -129,7 +129,7 @@ import Data.Text(Text)
 import Data.X509(SignedCertificate)
 import Crypto.JOSE.Types(Base64SHA1)
 import Crypto.JOSE.Types(Base64SHA256)
-import Data.Functor.Classes(Eq1, eq1, Show1, showsPrec1)
+import Data.Functor.Classes(Eq1(liftEq), eq1, Show1(liftShowsPrec), showsPrec1)
 
 {- $extending
 
@@ -210,6 +210,48 @@ data JWSHeader p = JWSHeader
   }
   deriving (Eq, Show)
 
+instance Eq1 JWSHeader where
+  liftEq f (JWSHeader a1 k1 w1 i1 u1 c1 t1 s1 p1 y1 r1) (JWSHeader a2 k2 w2 i2 u2 c2 t2 s2 p2 y2 r2) =
+    let eqHeaderParam (HeaderParam p1' a1') (HeaderParam p2' a2') =
+          (p1' `f` p2') && a1' == a2'
+        eqMaybeHeaderParam a1' a2' =
+          all (\x1' -> all (\x2' -> x1' `eqHeaderParam` x2') a2') a1'
+    in  and 
+          [
+            a1 `eqHeaderParam` a2
+          , k1 `eqMaybeHeaderParam` k2
+          , w1 `eqMaybeHeaderParam` w2
+          , i1 `eqMaybeHeaderParam` i2
+          , u1 `eqMaybeHeaderParam` u2
+          , c1 `eqMaybeHeaderParam` c2
+          , t1 `eqMaybeHeaderParam` t2
+          , s1 `eqMaybeHeaderParam` s2
+          , p1 `eqMaybeHeaderParam` p2
+          , y1 `eqMaybeHeaderParam` y2
+          , r1 == r2
+          ]
+
+instance Show1 JWSHeader where
+  liftShowsPrec f _ n (JWSHeader a k w i u c t s p y r) = 
+    let showHeaderParam (HeaderParam p' a') =
+          showParen True (showString "HeaderParam " . f n p' . showString " " . shows a')
+        showMaybeHeaderParam Nothing =
+          showString "Nothing"
+        showMaybeHeaderParam (Just hp) =
+          showString "Just " . showHeaderParam hp
+    in  showString "JWSHeader " .
+        showHeaderParam a .
+        showMaybeHeaderParam k .
+        showMaybeHeaderParam w .
+        showMaybeHeaderParam i .
+        showMaybeHeaderParam u .
+        showMaybeHeaderParam c .
+        showMaybeHeaderParam t .
+        showMaybeHeaderParam s .
+        showMaybeHeaderParam p .
+        showMaybeHeaderParam y .
+        shows r
+
 class HasAlg a where
   alg :: Lens' (a p) (HeaderParam p Alg)
   default alg :: HasJWSHeader a => Lens' (a p) (HeaderParam p Alg)
@@ -265,44 +307,6 @@ class HasCrit a where
   default crit :: HasJWSHeader a => Lens' (a p) (Maybe (NonEmpty Text))
   crit = jwsHeader . crit
 
-{-
-
-class HasAlg a where
-  alg :: Lens' (a p) (HeaderParam p Alg)
-  default alg :: HasJWSHeader a => Lens' (a p) (HeaderParam p Alg)
-  alg = jwsHeader . alg
-
-class HasJku a where
-  jku :: Lens' (a p) (Maybe (HeaderParam p URI))
-  default jku :: HasJWSHeader a => Lens' (a p) (Maybe (HeaderParam p URI))
-  jku = jwsHeader . jku
-
-class HasJwk a where
-  jwk :: Lens' (a p) (Maybe (HeaderParam p JWK))  
-  default jwk :: HasJWSHeader a => Lens' (a p) (Maybe (HeaderParam p JWK))
-  jwk = jwsHeader . jwk
-
-class HasKid a where
-  kid :: Lens' (a p) (Maybe (HeaderParam p Text))
-  default kid :: HasJWSHeader a => Lens' (a p) (Maybe (HeaderParam p Text))
-  kid = jwsHeader . kid
-
-class HasX5u a where
-  x5u :: Lens' (a p) (Maybe (HeaderParam p URI))
-  default x5u :: HasJWSHeader a => Lens' (a p) (Maybe (HeaderParam p URI))
-  x5u = jwsHeader . x5u
-
-class HasX5c a where
-  x5c :: Lens' (a p) (Maybe (HeaderParam p (NonEmpty SignedCertificate)))
-  default x5c :: HasJWSHeader a => Lens' (a p) (Maybe (HeaderParam p (NonEmpty SignedCertificate)))
-  x5c = jwsHeader . x5c
-
-class HasX5t a where
-  x5t :: Lens' (a p) (Maybe (HeaderParam p Base64SHA1))
-  default x5t :: HasJWSHeader a => Lens' (a p) (Maybe (HeaderParam p Base64SHA1))
-  x5t = jwsHeader . x5t
-
-  -}
 class
   (
     HasAlg a

@@ -43,7 +43,6 @@ import Control.Lens.TH (makeClassyPrisms, makePrisms)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding.Error as T
 
-
 -- | The wrong number of parts were found when decoding a
 -- compact JOSE object.
 --

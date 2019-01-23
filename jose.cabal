@@ -87,6 +87,7 @@ library
     x509                 >= 1.4 && < 1.8,
     modern-uri
 
+
   ghc-options:    -Wall
   hs-source-dirs: src
 
@@ -105,6 +106,8 @@ test-suite tests
     JWT
     Properties
     Types
+    WrappedExceptT
+  ghc-options:    -Wall
 
   build-depends:
     base
@@ -137,6 +140,7 @@ test-suite tests
     , hspec
     , QuickCheck
     , quickcheck-instances
+    , modern-uri
 
 executable jose-example
   if !flag(demos)

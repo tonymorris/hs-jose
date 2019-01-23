@@ -23,15 +23,12 @@ import Data.Monoid ((<>))
 
 import Control.Lens
 import Control.Lens.Extras (is)
-import Control.Monad.Reader (MonadReader(..), ReaderT, runReaderT)
-import Control.Monad.State (execState)
-import Control.Monad.Time (MonadTime(..))
+import Control.Monad.Reader (runReaderT)
 import Data.Aeson hiding ((.=))
-import Data.Functor.Identity (runIdentity)
 import Data.HashMap.Strict (insert)
 import qualified Data.Set as S
 import Data.Time
-import Network.URI (parseURI)
+import Text.URI (mkURI)
 import Safe (headMay)
 import Test.Hspec
 
@@ -260,7 +257,7 @@ spec = do
     it "parses from JSON correctly" $ do
       (decode "[\"foo\"]" >>= headMay >>= preview string) `shouldBe` Just "foo"
       (decode "[\"http://example.com\"]" >>= headMay >>= preview uri)
-        `shouldBe` parseURI "http://example.com"
+        `shouldBe` mkURI "http://example.com"
       decode "[\":\"]" `shouldBe` (Nothing :: Maybe [StringOrURI])
       decode "[12345]" `shouldBe` (Nothing :: Maybe [StringOrURI])
 

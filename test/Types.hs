@@ -14,15 +14,24 @@
 
 {-# LANGUAGE OverloadedStrings #-}
 
+{-# LANGUAGE FlexibleInstances #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+
 module Types where
 
 import Data.Aeson
 import qualified Data.ByteString as BS
 import Data.List.NonEmpty
-import Network.URI (parseURI)
+import Text.URI (URI, mkURI)
 import Test.Hspec
 
 import Crypto.JOSE.Types
+
+instance FromJSON URI where
+  parseJSON = undefined
+
+instance ToJSON URI where
+  toJSON = undefined
 
 spec :: Spec
 spec = do
@@ -45,11 +54,11 @@ uriSpec :: Spec
 uriSpec = describe "URI typeclasses" $ do
   it "gets parsed from JSON correctly" $ do
     decode "[\"http://example.com\"]" `shouldBe`
-      fmap (fmap (:[])) parseURI "http://example.com"
+      fmap (fmap (:[])) mkURI "http://example.com"
     decode "[\"foo\"]" `shouldBe` (Nothing :: Maybe [URI])
 
   it "gets formatted to JSON correctly" $
-    fmap toJSON (Network.URI.parseURI "http://example.com")
+    fmap toJSON (mkURI "http://example.com")
       `shouldBe` Just (String "http://example.com")
 
 base64IntegerSpec :: Spec
