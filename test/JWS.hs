@@ -39,7 +39,6 @@ import Crypto.JOSE.JWS
 import qualified Crypto.JOSE.JWA.JWS as JWA.JWS
 import qualified Crypto.JOSE.Types as Types
 import Data.Functor.Classes
-
 import WrappedExceptT
 
 deriving instance Eq1 JWSHeader'

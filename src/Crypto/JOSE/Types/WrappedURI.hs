@@ -18,7 +18,6 @@
 
 module Crypto.JOSE.Types.WrappedURI where
   
-import qualified Data.Text as T
 import Text.URI (URI)
 import Text.URI as URI (mkURI, render)
 
