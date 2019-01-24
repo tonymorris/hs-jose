@@ -20,13 +20,14 @@ module Crypto.JOSE.Types.WrappedURI where
   
 import qualified Data.Text as T
 import Text.URI (URI)
-import Text.URI as URI (mkURI)
+import Text.URI as URI (mkURI, render)
 
 import Control.Lens(Rewrapped, Wrapped(_Wrapped', Unwrapped), _Wrapped, Getting, AReview, iso, view)
 import Data.Aeson
 import Data.Aeson.Types
 import Data.Text(Text)
 import Crypto.JOSE.Types.Internal
+import Control.Monad.Catch(MonadThrow)
 
 newtype WrappedURI =
   WrappedURI URI
@@ -44,10 +45,23 @@ instance Wrapped WrappedURI where
 
 instance FromJSON WrappedURI where
   parseJSON = withText "URI" $
-    maybe (fail "not a URI") return . fmap WrappedURI . URI.mkURI
+    maybe (fail "not a URI") return . mkURI'
 
 instance ToJSON WrappedURI where
-  toJSON = String . T.pack . show . view _Wrapped
+  toJSON = String . render'
+
+mkURI' ::
+  MonadThrow f =>
+  Text
+  -> f WrappedURI
+mkURI' =
+  fmap WrappedURI . mkURI
+
+render' ::
+  WrappedURI
+  -> Text
+render' =
+  render . view _Wrapped
 
 kvURI :: KeyValue kv => Text -> URI -> kv
 kvURI = previewEqual (_Wrapped :: AReview WrappedURI URI)

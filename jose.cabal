@@ -54,12 +54,12 @@ library
     Crypto.JOSE.JWA.JWS
     Crypto.JOSE.JWA.JWE
     Crypto.JOSE.JWA.JWE.Alg
+    Crypto.JOSE.Types.WrappedURI
 
   other-modules:
     Crypto.JOSE.TH
     Crypto.JOSE.Types.Internal
     Crypto.JOSE.Types.WrappedNonEmpty
-    Crypto.JOSE.Types.WrappedURI
 
   build-depends:
     aeson                >= 1.4.2 && < 1.5,
@@ -70,6 +70,7 @@ library
     concise              >= 0.1 && < 0.2,
     containers           >= 0.5 && < 0.7,
     cryptonite           >= 0.7 && < 0.26,
+    exceptions           >= 0.10.0 && < 0.11,
     lens                 >= 4.16 && < 4.18,
     mtl                  >= 2 && < 2.3,
     memory               >= 0.7 && < 0.15,
