@@ -86,8 +86,7 @@ library
     unordered-containers == 0.2.*,
     vector               >= 0.12 && < 0.13,
     x509                 >= 1.4 && < 1.8,
-    modern-uri
-
+    modern-uri           >= 0.3.0 && < 0.4
 
   ghc-options:    -Wall
   hs-source-dirs: src
